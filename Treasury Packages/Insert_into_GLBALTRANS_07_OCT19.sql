@@ -1,0 +1,5 @@
+Insert into GLBALTRANS
+   (FROM_GL, TO_CRGL, TO_DRGL)
+ Values
+   ('122117101', '140101101', '140116104');
+COMMIT;

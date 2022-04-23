@@ -1,0 +1,38 @@
+DROP TABLE AML_CLIENT_DATA ;
+
+CREATE TABLE AML_CLIENT_DATA
+(
+   FIRST_NAME               VARCHAR (300),
+   LAST_NAME                VARCHAR (100),
+   PRESENT_ADDRESS          VARCHAR (1000),
+   PRESENT_CITY             VARCHAR (160),
+   PRESENT_COUNTRY          VARCHAR (150),
+   CUSTOMER_PROFESSION      VARCHAR (20),
+   ACCOUNT_OPENING_WAY      VARCHAR (20),
+   NET_INCOME               VARCHAR (20),
+   NATURE_OF_BUSINESS       VARCHAR (150),
+   NET_WORTH                VARCHAR (20),
+   NID                      VARCHAR (50),
+   DATE_OF_BIRTH            DATE,
+   PERMANENT_ADDRESS        VARCHAR (1000),
+   PERMANENT_COUNTRY        VARCHAR (150),
+   PERMANENT_CITY           VARCHAR (150),
+   IS_GOVERNMENT_CUSTOMER   VARCHAR (10),
+   NATIONALITY              VARCHAR (50),
+   PASSPORT_ISSUE_COUNTRY   VARCHAR (150),
+   IS_GREEN_CARD_HOLDER     VARCHAR (10),
+   IS_US_OWNERSHIP          VARCHAR (10),
+   IS_US_CITIZEN            VARCHAR (10),
+   PRESENT_STATE            VARCHAR (150),
+   EMAIL                    VARCHAR (120),
+   FATHER_NAME              VARCHAR (120),
+   MOTHER_NAME              VARCHAR (120),
+   GENDER                   VARCHAR (15),
+   PHONE                    VARCHAR (120),
+   MOBILE                   VARCHAR (120),
+   BIRTH_PLACE              VARCHAR (50),
+   CUSTOMER_TYPE            VARCHAR (50),
+   CUSTOMER_CREATION_DATE   DATE,
+   CUSTOMER_NO              VARCHAR (50),
+   CBS_BRANCH_CODE          VARCHAR (50)
+)
