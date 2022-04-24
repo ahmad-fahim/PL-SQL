@@ -36,8 +36,7 @@ BEGIN
                 AND P.PIDDOCS_PID_TYPE = P_PID_TYPE;
       END IF;
    EXCEPTION
-      WHEN OTHERS
-      THEN
+      WHEN OTHERS THEN
          V_OTHER_DOCU_TYP := NULL;
          V_OTHER_DOCU_NO := NULL;
          V_OTHER_DOCU_DATE := NULL;
