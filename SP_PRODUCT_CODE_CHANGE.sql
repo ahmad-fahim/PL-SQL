@@ -246,8 +246,8 @@ BEGIN
              LNACRS_SANC_REF_NUM,
              LNACRS_SANC_DATE   ,
              LNACRSDTL_REPAY_FREQ  ,
-             LNACRS_REPH_ON_AMT, 
-             LNACRS_EQU_INSTALLMENT      
+             LNACRS_REPH_ON_AMT,
+             LNACRS_EQU_INSTALLMENT
         INTO V_LNACRSDTL_REPAY_AMT,
              V_LNACRSDTL_REPAY_FROM_DATE,
              V_LNACRSDTL_NUM_OF_INSTALLMENT,
@@ -641,7 +641,19 @@ BEGIN
 
    IF W_NEW_GL <> W_PREVIOUS_GL
    THEN
-      SP_GLMAST_UPDATE_TO_0 (W_NEW_GL, W_PREVIOUS_GL);
+   
+      --SP_GLMAST_UPDATE_TO_0 (W_NEW_GL, W_PREVIOUS_GL);
+      
+      
+   UPDATE GLMAST
+      SET GL_CUST_AC_ALLOWED = 0
+    WHERE GL_NUMBER IN (SELECT EXTGL_GL_HEAD
+                          FROM EXTGL
+                         WHERE EXTGL_ACCESS_CODE = W_NEW_GL
+                        UNION ALL
+                        SELECT EXTGL_GL_HEAD
+                          FROM EXTGL
+                         WHERE EXTGL_ACCESS_CODE = W_PREVIOUS_GL) ;
 
       IF W_CURR_BAL < 0
       THEN
@@ -704,7 +716,18 @@ BEGIN
          END;
       END IF;
 
-      SP_GLMAST_UPDATE_TO_1 (W_NEW_GL, W_PREVIOUS_GL);
+      --SP_GLMAST_UPDATE_TO_1 (W_NEW_GL, W_PREVIOUS_GL);
+      
+    UPDATE GLMAST
+      SET GL_CUST_AC_ALLOWED = 1
+    WHERE GL_NUMBER IN (SELECT EXTGL_GL_HEAD
+                          FROM EXTGL
+                         WHERE EXTGL_ACCESS_CODE = W_NEW_GL
+                        UNION ALL
+                        SELECT EXTGL_GL_HEAD
+                          FROM EXTGL
+                         WHERE EXTGL_ACCESS_CODE = W_PREVIOUS_GL) ;
+                         COMMIT ;
    ELSE
       W_ERR := 'THE GLS ARE SAME... SO NO TRANSACTION IS NEEDED';
    END IF;

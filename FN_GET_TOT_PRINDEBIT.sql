@@ -1,0 +1,137 @@
+CREATE OR REPLACE FUNCTION FN_GET_TOT_PRINDEBIT (
+   W_INTERNAL_ACNUM      NUMBER,
+   P_ENTITY_NUM       IN NUMBER)
+   RETURN NUMBER
+IS
+   W_SQL                           VARCHAR2 (2000);
+   V_LMTLINE_LIMIT_EFF_DATE        DATE;
+   V_LMTLINE_LIMIT_EFF_DATE_PREV   DATE;
+   P_START_MONTH                   NUMBER;
+   P_START_YEAR                    NUMBER;
+   V_CBD_YEAR                      NUMBER;
+   V_TRAN_YEAR                     NUMBER;
+   V_TOTAL_AMT                     NUMBER (18, 3);
+   V_TOTAL_DEBIT_BALANCE           NUMBER (18, 3);
+   P_CBD_START_MONTH_DATE          DATE;
+   V_CURRENT_PRIN_AMT              NUMBER (18, 3);
+   V_EFFECTIVE_MONTH_PRIN_AMT      NUMBER (18, 3);
+   P_EFFECTIVE_YEAR                NUMBER;
+   P_EFFECTIVE_START_DATE          DATE;
+   V_TOTAL_PRIN_AMT                NUMBER (18, 3);
+BEGIN
+   SELECT LMTLINE_LIMIT_EFF_DATE
+     INTO V_LMTLINE_LIMIT_EFF_DATE
+     FROM LIMITLINE, ACASLLDTL
+    WHERE     LMTLINE_ENTITY_NUM = 1
+          AND ACASLLDTL_CLIENT_NUM = LMTLINE_CLIENT_CODE
+          AND LMTLINE_NUM = ACASLLDTL_LIMIT_LINE_NUM
+          AND ACASLLDTL_ENTITY_NUM = P_ENTITY_NUM
+          AND ACASLLDTL_INTERNAL_ACNUM = W_INTERNAL_ACNUM;
+
+
+   P_START_MONTH := TO_CHAR (TO_DATE (V_LMTLINE_LIMIT_EFF_DATE), 'MM');
+
+   P_START_YEAR := TO_CHAR (TO_DATE (V_LMTLINE_LIMIT_EFF_DATE), 'YYYY');
+
+   P_EFFECTIVE_YEAR := TO_NUMBER (TO_CHAR (V_LMTLINE_LIMIT_EFF_DATE, 'YYYY'));
+
+   P_EFFECTIVE_START_DATE := TRUNC (V_LMTLINE_LIMIT_EFF_DATE, 'MM');
+   V_LMTLINE_LIMIT_EFF_DATE_PREV := V_LMTLINE_LIMIT_EFF_DATE - 1;
+
+   BEGIN
+      W_SQL :=
+            'SELECT NVL(SUM(TRANADV_PRIN_AC_AMT),0) FROM TRAN'
+         || P_EFFECTIVE_YEAR
+         || ' ,TRANADV'
+         || P_EFFECTIVE_YEAR
+         || ' WHERE TRANADV_ENTITY_NUM = TRAN_ENTITY_NUM
+      AND TRANADV_BRN_CODE = TRAN_BRN_CODE
+      AND TRANADV_DATE_OF_TRAN = TRAN_DATE_OF_TRAN
+      AND TRAN_BATCH_NUMBER=TRANADV_BATCH_NUMBER
+      AND TRANADV_BATCH_SL_NUM = TRAN_BATCH_SL_NUM
+             AND TRAN_DB_CR_FLG=''D''
+             AND  TRANADV_PRIN_AC_AMT<>0
+             AND TRANADV_PRIN_BC_AMT <>0
+             AND TRAN_INTERNAL_ACNUM= '
+         || W_INTERNAL_ACNUM
+         || ' AND TRAN_DATE_OF_TRAN BETWEEN '''
+         || P_EFFECTIVE_START_DATE
+         || ''' AND '''
+         || V_LMTLINE_LIMIT_EFF_DATE_PREV
+         || '''';
+
+
+      EXECUTE IMMEDIATE W_SQL INTO V_EFFECTIVE_MONTH_PRIN_AMT;
+   EXCEPTION
+      WHEN OTHERS
+      THEN
+         V_EFFECTIVE_MONTH_PRIN_AMT := 0;
+   END;
+
+   SELECT   (SELECT NVL (
+                       (SELECT NVL (ADVBBAL_PRIN_AC_DB_OPBAL, 0) CR
+                          FROM ADVBBAL
+                         WHERE     ADVBBAL_ENTITY_NUM = 1
+                               AND ADVBBAL_INTERNAL_ACNUM = W_INTERNAL_ACNUM
+                               AND ADVBBAL_YEAR =
+                                      TO_NUMBER (
+                                         TO_CHAR (TRUNC (SYSDATE), 'YYYY'))
+                               AND ADVBBAL_MONTH =
+                                      TO_NUMBER (
+                                         TO_CHAR (TRUNC (SYSDATE), 'MM'))),
+                       0)
+               FROM DUAL)
+          - (SELECT NVL (
+                       (SELECT NVL (ADVBBAL_PRIN_AC_DB_OPBAL, 0) CR
+                          FROM ADVBBAL
+                         WHERE     ADVBBAL_ENTITY_NUM = 1
+                               AND ADVBBAL_INTERNAL_ACNUM = W_INTERNAL_ACNUM
+                               AND ADVBBAL_YEAR = P_START_YEAR
+                               AND ADVBBAL_MONTH = P_START_MONTH),
+                       0)
+               FROM DUAL)
+     INTO V_TOTAL_DEBIT_BALANCE
+     FROM DUAL;
+
+   P_CBD_START_MONTH_DATE := TRUNC (SYSDATE, 'MM');
+
+   V_CBD_YEAR := TO_NUMBER (TO_CHAR (TRUNC (SYSDATE), 'YYYY'));
+
+   BEGIN
+      W_SQL :=
+            'SELECT NVL(SUM(TRANADV_PRIN_AC_AMT),0) FROM TRAN'
+         || V_CBD_YEAR
+         || ' ,TRANADV'
+         || V_CBD_YEAR
+         || ' WHERE TRANADV_ENTITY_NUM = TRAN_ENTITY_NUM
+      AND TRANADV_BRN_CODE = TRAN_BRN_CODE
+      AND TRANADV_DATE_OF_TRAN = TRAN_DATE_OF_TRAN
+      AND TRAN_BATCH_NUMBER=TRANADV_BATCH_NUMBER
+      AND TRANADV_BATCH_SL_NUM = TRAN_BATCH_SL_NUM
+             AND TRAN_DB_CR_FLG=''D''
+             AND  TRANADV_PRIN_AC_AMT<>0
+             AND TRANADV_PRIN_BC_AMT <>0
+             AND TRAN_INTERNAL_ACNUM= '
+         || W_INTERNAL_ACNUM
+         || ' AND TRAN_DATE_OF_TRAN BETWEEN '''
+         || P_CBD_START_MONTH_DATE
+         || ''' AND '''
+         || TRUNC (SYSDATE)
+         || '''';
+
+
+      --DBMS_OUTPUT.PUT_LINE (W_SQL);
+
+      EXECUTE IMMEDIATE W_SQL INTO V_CURRENT_PRIN_AMT;
+   EXCEPTION
+      WHEN OTHERS
+      THEN
+         V_CURRENT_PRIN_AMT := 0;
+   END;
+
+   V_TOTAL_PRIN_AMT :=
+      V_TOTAL_DEBIT_BALANCE + V_CURRENT_PRIN_AMT - V_EFFECTIVE_MONTH_PRIN_AMT;
+
+   RETURN V_TOTAL_PRIN_AMT;
+END;
+/
