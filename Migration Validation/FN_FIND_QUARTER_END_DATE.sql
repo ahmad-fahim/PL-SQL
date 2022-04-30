@@ -1,0 +1,35 @@
+CREATE OR REPLACE FUNCTION FN_FIND_QUARTER_END_DATE (P_MIG_DATE DATE)
+   RETURN DATE
+IS
+   W_DATE   DATE;
+BEGIN
+   SELECT ADD_MONTHS (TRUNC (P_MIG_DATE, 'YEAR') - 1, 9)
+     INTO W_DATE
+     FROM DUAL;
+
+   IF W_DATE > P_MIG_DATE
+   THEN
+      SELECT ADD_MONTHS (TRUNC (P_MIG_DATE, 'YEAR') - 1, 6)
+        INTO W_DATE
+        FROM DUAL;
+
+      IF W_DATE > P_MIG_DATE
+      THEN
+         SELECT ADD_MONTHS (TRUNC (P_MIG_DATE, 'YEAR') - 1, 3)
+           INTO W_DATE
+           FROM DUAL;
+
+         IF W_DATE > P_MIG_DATE
+         THEN
+            SELECT ADD_MONTHS (TRUNC (P_MIG_DATE, 'YEAR') - 1, 0)
+              INTO W_DATE
+              FROM DUAL;
+         END IF;
+      END IF;
+   END IF;
+
+
+
+   RETURN W_DATE;
+END;
+/

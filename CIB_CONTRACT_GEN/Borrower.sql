@@ -1,5 +1,3 @@
-
-
 CREATE TABLE CIB_BORROWER
 (
    PERIOD           DATE,
